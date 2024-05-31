@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido de Pizza</title>
+    
+    <style>
+        /* styles.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    color: #ff6f00;
+    text-align: center;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+.flavors, .ingredients {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+label {
+    margin-right: 10px;
+}
+
+button {
+    background-color: #ff6f00;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #e65c00;
+}
+
+#verCarrinho {
+    margin-top: 20px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgb(0,0,0);
+    background-color: rgba(0,0,0,0.4);
+    padding-top: 60px;
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover, .close:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#listaCarrinho {
+    list-style-type: none;
+    padding: 0;
+}
+
+#listaCarrinho li {
+    background: #e0e0e0;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Pedido de Pizza</h1>
+        </header>
+        
+        <form id="pizzaForm" onsubmit="return false;">
+            <section class="section">
+                <h2>Escolha o Tamanho</h2>
+                <select id="tamanho" required>
+                    <option value="" disabled selected>Selecione o tamanho</option>
+                    <option value="Pequena" data-price="20">Pequena - R$20,00</option>
+                    <option value="Média" data-price="30">Média - R$30,00</option>
+                    <option value="Grande" data-price="40">Grande - R$40,00</option>
+                </select>
+            </section>
+
+            <section class="section">
+                <h2>Escolha os Sabores</h2>
+                <div class="flavors">
+                    <div>
+                        <label for="sabor1">Sabor 1:</label>
+                        <select id="sabor1" required>
+                            <option value="" disabled selected>Selecione o sabor</option>
+                            <option value="Marguerita" data-ingredients="Mussarela, Tomate, Manjericão">Marguerita</option>
+                            <option value="Calabresa" data-ingredients="Mussarela, Calabresa, Cebola">Calabresa</option>
+                            <option value="Portuguesa" data-ingredients="Mussarela, Presunto, Ovo, Cebola, Azeitona">Portuguesa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="sabor2">Sabor 2 (opcional):</label>
+                        <select id="sabor2">
+                            <option value="">Nenhum</option>
+                            <option value="Marguerita" data-ingredients="Mussarela, Tomate, Manjericão">Marguerita</option>
+                            <option value="Calabresa" data-ingredients="Mussarela, Calabresa, Cebola">Calabresa</option>
+                            <option value="Portuguesa" data-ingredients="Mussarela, Presunto, Ovo, Cebola, Azeitona">Portuguesa</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Escolha os Ingredientes Adicionais</h2>
+                <div class="ingredients">
+                    <div>
+                        <input type="checkbox" id="ingrediente1" value="Azeitona" data-price="2">
+                        <label for="ingrediente1">Azeitona - R$2,00</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ingrediente2" value="Cebola" data-price="1.5">
+                        <label for="ingrediente2">Cebola - R$1,50</label>
+                    </div>
+                    <div>
+                        <input type="checkbox" id="ingrediente3" value="Tomate" data-price="2">
+                        <label for="ingrediente3">Tomate - R$2,00</label>
+                    </div>
+                </div>
+            </section>
+
+            <button type="submit" onclick="adicionarAoCarrinho()">Adicionar ao Carrinho</button>
+        </form>
+
+        <div id="carrinhoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="fecharModal()">&times;</span>
+                <h2>Carrinho</h2>
+                <ul id="listaCarrinho"></ul>
+                <h3>Total: R$<span id="totalCarrinho">0.00</span></h3>
+                <button onclick="enviarParaWhatsApp()">Enviar Pedido para o WhatsApp</button>
+            </div>
+        </div>
+
+        <button id="verCarrinho" onclick="abrirModal()">Ver Carrinho</button>
+    </div>
+
+    <script>
+        // scripts.js
+function adicionarAoCarrinho() {
+    const tamanhoSelect = document.getElementById('tamanho');
+    const sabor1Select = document.getElementById('sabor1');
+    const sabor2Select = document.getElementById('sabor2');
+    const ingredientesCheckboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+
+    const tamanho = tamanhoSelect.value;
+    const sabor1 = sabor1Select.value;
+    const sabor2 = sabor2Select.value;
+    const ingredientes = Array.from(ingredientesCheckboxes).map(checkbox => checkbox.value);
+
+    if (!tamanho || !sabor1) {
+        alert('Por favor, selecione o tamanho e pelo menos um sabor para a pizza.');
+        return;
+    }
+
+    const tamanhoPreco = parseFloat(tamanhoSelect.selectedOptions[0].dataset.price);
+    let pizzaDescription = `${tamanho} pizza de ${sabor1}`;
+    let total = tamanhoPreco;
+
+    if (sabor2) {
+        pizzaDescription += ` e ${sabor2}`;
+    }
+
+    const sabor1Ingredientes = sabor1Select.selectedOptions[0].dataset.ingredients;
+    const sabor2Ingredientes = sabor2 ? sabor2Select.selectedOptions[0].dataset.ingredients : '';
+    pizzaDescription += ` com ${sabor1Ingredientes}`;
+    if (sabor2Ingredientes) {
+        pizzaDescription += ` e ${sabor2Ingredientes}`;
+    }
+
+    if (ingredientes.length > 0) {
+        pizzaDescription += `, adicionais: ${ingredientes.join(', ')}`;
+        ingredientes.forEach(ingrediente => {
+            const ingredienteCheckbox = document.querySelector(`input[value="${ingrediente}"]`);
+            const ingredientePreco = parseFloat(ingredienteCheckbox.dataset.price);
+            total += ingredientePreco;
+        });
+    }
+
+    const listaCarrinho = document.getElementById('listaCarrinho');
+    const listItem = document.createElement('li');
+    listItem.textContent = pizzaDescription;
+    listaCarrinho.appendChild(listItem);
+
+    atualizarTotal(total);
+
+    document.getElementById('pizzaForm').reset();
+}
+
+function atualizarTotal(total) {
+    const totalCarrinho = document.getElementById('totalCarrinho');
+    const totalAtual = parseFloat(totalCarrinho.textContent);
+    const novoTotal = totalAtual + total;
+    totalCarrinho.textContent = novoTotal.toFixed(2);
+}
+
+function abrirModal() {
+    document.getElementById('carrinhoModal').style.display = "block";
+}
+
+function fecharModal() {
+    document.getElementById('carrinhoModal').style.display = "none";
+}
+
+function enviarParaWhatsApp() {
+    const listaCarrinho = document.getElementById('listaCarrinho');
+    const itensCarrinho = Array.from(listaCarrinho.children).map(item => item.textContent);
+    if (itensCarrinho.length === 0) {
+        alert('Seu carrinho está vazio.');
+        return;
+    }
+
+    const mensagem = `Olá, gostaria de fazer o seguinte pedido:\n\n${itensCarrinho.join('\n')}\n\nTotal: R$${document.getElementById('totalCarrinho').textContent}`;
+    const telefone = '5511999999999'; // Substitua pelo número do WhatsApp desejado
+    const url = `https://wa.me/${telefone}?text=${encodeURIComponent(mensagem)}`;
+    window.open(url, '_blank');
+}
+
+    </script>
+</body>
+</html>
